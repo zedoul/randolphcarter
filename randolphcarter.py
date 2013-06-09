@@ -27,25 +27,29 @@ class randolphcarter:
 # Get the word ID
 			wordrow=self.con.execute("select rowid from wordlist where word='%s'" % word).fetchone()
 
-		if wordrow!=None:
-			wordid=wordrow[0]
-			wordids.append(wordid)
-			if tablenumber>0:
-				tablelist+=','
-				clauselist+=' and '
-				clauselist+='w%d.urlid=w%d.urlid and ' % (tablenumber-1,tablenumber)
-			fieldlist+=',w%d.location' % tablenumber
-			tablelist+='wordlocation w%d' % tablenumber      
-			clauselist+='w%d.wordid=%d' % (tablenumber,wordid)
-			tablenumber+=1
-
+			if wordrow!=None:
+				wordid=wordrow[0]
+				wordids.append(wordid)
+				if tablenumber>0:
+					tablelist+=','
+					clauselist+=' and '
+					clauselist+='w%d.urlid=w%d.urlid and ' % (tablenumber-1,tablenumber)
+				fieldlist+=',w%d.location' % tablenumber
+				tablelist+='wordlocation w%d' % tablenumber      
+				clauselist+='w%d.wordid=%d' % (tablenumber,wordid)
+				tablenumber+=1
+			else:
+				continue
 # Create the query from the separate parts
-			fullquery='select %s from %s where %s' % (fieldlist,tablelist,clauselist)
-			print "query:[" + fullquery + "]"
-			cur=self.con.execute(fullquery)
-			rows=[row for row in cur]
 
-			return rows,wordids
+		if '' == fieldlist or '' == clauselist:
+			return None, None
+		fullquery='select %s from %s where %s' % (fieldlist,tablelist,clauselist)
+		print "query:[" + fullquery + "]"
+		cur=self.con.execute(fullquery)
+		rows=[row for row in cur]
+
+		return rows,wordids
 
 	def getscoredlist(self,rows,wordids):
 		totalscores=dict([(row[0],0) for row in rows])
@@ -66,6 +70,9 @@ class randolphcarter:
 
 	def query(self,q):
 		rows,wordids=self.getmatchrows(q)
+		if None == rows and None == wordids:
+			print "No results"
+			return None
 		scores=self.getscoredlist(rows,wordids)
 		rankedscores=[(score,url) for (url,score) in scores.items()]
 		rankedscores.sort()
@@ -141,12 +148,11 @@ class randolphcarter:
 		urlids=[urlid for urlid in dict([(row[0],1) for row in rows])]
 		nnres=self.mynet.getresult(wordids,urlids)
 		scores=dict([(urlids[i],nnres[i]) for i in range(len(urlids))])
-		print scores
 		return self.normalizescores(scores)
 
 if __name__ == '__main__':
-	mynet=nn.searchnet('nn.db')
-	mynet.maketables()
+#	mynet=nn.searchnet('nn.db')
+#	mynet.maketables()
 	carter=randolphcarter('searchindex.db')
-	keyword = unicode('google','utf-8')
+	keyword = unicode('네이버 다음','utf-8')
 	a = carter.query(keyword)
