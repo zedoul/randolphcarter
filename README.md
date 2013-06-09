@@ -11,8 +11,7 @@ import nn
 mynn=nn.searchnet('nn.db')
 mynn.maketables()
 carter=randolphcarter('searchindex.db')
-searcher = randolphcarter.searcher('dreamlands.db')
-searcher.query('Ultimate')
+carter.query(unicode('Ultimate','utf-8'))
 ```
 
 Prerequisite
